@@ -1,0 +1,173 @@
+{
+  "name": "Newsletter Project n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        -64
+      ],
+      "id": "acad1db3-c399-4247-a296-a7bdf98ee431",
+      "name": "Schedule Trigger",
+      "notesInFlow": true,
+      "notes": "Hi This is personalized newsletter that provides you news every day "
+    },
+    {
+      "parameters": {
+        "url": "https://news.ycombinator.com/rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -208,
+        -64
+      ],
+      "id": "9fd26457-97e8-48b7-a4cb-296b62cab47e",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a friendly newsletter generator that turns a list of AI-news items into a concise daily email.\n",
+              "role": "assistant"
+            },
+            {
+              "content": "=Here are today’s AI news items:\n\n{{$node[\"Code\"].json[\"articles\"]}}\n\nPlease write:\n1. A 1–2 sentence intro\n2. A bullet list (2–3 lines each) summarizing each item\n3. A friendly sign-off\n"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 80,
+          "temperature": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        176,
+        -32
+      ],
+      "id": "b5285e91-25dd-45a3-9953-2aa7f12dadd6",
+      "name": "Message a model",
+      "executeOnce": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "mAPysLkUZoXoTdq4",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// grab all 30 RSS items\nconst items = $input.all();\n// build one long markdown string\nconst articles = items\n  .map(n => `• **${n.json.title}**\\n  ${n.json.link}`)\n  .join('\\n\\n');\n// send out a single object with that blob\nreturn [{ json: { articles } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        -48
+      ],
+      "id": "59c5e80b-391c-4f88-ac69-057615c5a9ce",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "sendTo": "sethsatyam1895@gmail.com",
+        "subject": "={{$node[\"Message a model\"].json[\"message\"].content.split(\"\\n\")[0]}}  \n",
+        "emailType": "text",
+        "message": "={{$node[\"Message a model\"].json[\"message\"].content}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        544,
+        -16
+      ],
+      "id": "600316e5-dcf6-4a98-9f11-c2194dbf5b7d",
+      "name": "Send a message",
+      "webhookId": "5e128d9a-3454-4193-a94f-5083436f82c4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "xM4QZURqCAkTXttd",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e3dbae26-efd1-4700-9525-5192f30eba6a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5fa24468730f8f1d579f8be1fbe28418d902faf84df6f3f8e79becee0e1a2064"
+  },
+  "id": "E8GZEV2T67IbzIZE",
+  "tags": []
+}
